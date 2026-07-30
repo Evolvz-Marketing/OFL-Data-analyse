@@ -116,10 +116,15 @@ footer ul{margin:0;padding-left:18px}
 footer li{margin:4px 0}
 
 @media(max-width:900px){.hero-stats,.prod,.insights{grid-template-columns:repeat(2,1fr)}.grid2,.aud,.email-grid{grid-template-columns:1fr}}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media(max-width:600px){.wrap{padding:0 15px}header{padding:38px 0 26px}header h1{font-size:29px}header .lede{font-size:16px}.insights{grid-template-columns:1fr}.sec-head h2{font-size:20px}.sec-head p,.analysis{font-size:14px}.journey-box{height:290px}.mchart{height:152px}.metric .mbig{font-size:24px}.hstat .v{font-size:34px}.cmp th,.cmp td{padding:9px 5px;font-size:12.5px}.cmp thead th{font-size:10.5px}.toppost{flex-direction:column;gap:10px}.legend{gap:12px 14px}.brand-logo{height:44px;width:118px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 .brand-logo{background:var(--logo) left center/contain no-repeat;height:56px;width:150px;display:block;margin:0 0 30px}
 .brand-logo-sm{background:var(--logo) left center/contain no-repeat;height:38px;width:102px;display:block;margin:0 0 18px;opacity:.9}
 @media(max-width:900px){.brand-logo{height:46px;width:124px}}
+.card{min-width:0}
+canvas{max-width:100%!important}
+.grid2>*,.email-grid>*,.channels>*,.aud>*,.insights>*,.metric{min-width:0}
 </style>
 </head>
 <body>
@@ -206,7 +211,7 @@ footer li{margin:4px 0}
   <p>Dezelfde periode (jan–jul). E-mail is het enige kanaal dat vóór de start al draaide, dus hier kan een echte jaar-op-jaar vergelijking.</p></div>
   <div class="email-grid">
     <div class="card pad">
-      <table class="cmp"><thead><tr><th></th><th>jan–jul ’25</th><th>jan–jul ’26</th><th></th></tr></thead><tbody id="email-body"></tbody></table>
+      <div class="table-scroll"><table class="cmp"><thead><tr><th></th><th>jan–jul ’25</th><th>jan–jul ’26</th><th></th></tr></thead><tbody id="email-body"></tbody></table></div>
       <p style="margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-soft);line-height:1.55">Het aantal <b style="color:var(--ink)">geopende</b> mails is meer dan verdubbeld, terwijl de <b style="color:var(--ink)">openratio</b> licht daalde. Dat klopt: er gingen ruim twee keer zoveel mails de deur uit, dus het volume groeide harder dan de openingen. Een openratio van ~29% blijft sterk voor een nieuwsbrief.</p>
     </div>
     <div class="card pad">
@@ -265,6 +270,8 @@ Object.entries(DATA.month_ticks).forEach(([ym,i])=>tickLabel[i]=monthLabel(ym));
 // sparser labels (every 3rd month) for the small metric charts
 const tickSparse = {};
 Object.entries(DATA.month_ticks).sort((a,b)=>a[1]-b[1]).forEach(([ym,i],k)=>{ if(k%3===0) tickSparse[i]=monthLabel(ym); });
+const monthOrder={};
+Object.entries(DATA.month_ticks).sort((a,b)=>a[1]-b[1]).forEach(([ym,i],k)=>{ monthOrder[i]=k; });
 
 Chart.defaults.font.family="'Inter',sans-serif";Chart.defaults.font.size=11.5;Chart.defaults.color='#56657F';
 const grid='#EDF3FB';
@@ -288,7 +295,7 @@ const takeoverPlugin = {
     ctx.setLineDash([]);
     if(chart.canvas.id==='journey'){
       ctx.fillStyle='#15418F';ctx.font="600 12.5px 'Space Grotesk',sans-serif";ctx.textAlign='left';
-      ctx.fillText('vanaf feb ’26  →',px+9,top+15);
+      ctx.fillText(chart.width<520?'feb ’26':'vanaf feb ’26  →',px+9,top+15);
     }
     ctx.restore();
   }
@@ -334,7 +341,7 @@ new Chart(ctx,{type:'line',data:{labels,datasets:[
 ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
  plugins:{legend:{display:false},tooltip:{backgroundColor:'#10233E',padding:11,cornerRadius:9,
    callbacks:{title:it=>{const d=DATA.days[it[0].dataIndex].split('-');return MN[+d[1]-1]+' ’'+d[0].slice(2);},label:it=>it.dataset.label+': '+nl(it.raw)}}},
- scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:false,callback:(v,i)=>tickLabel[i]||''}},
+ scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:false,callback:function(v,i){if(!(i in tickLabel))return '';var w=this.chart?this.chart.width:800;var step=w<430?3:(w<640?2:1);return (monthOrder[i]%step===0)?tickLabel[i]:'';}}},
   y:{grid:{color:grid},border:{display:false},title:{display:true,text:'aantal volgers',color:'#56657F',font:{size:11.5}},beginAtZero:true}}}});})();
 
 // channel metric charts
